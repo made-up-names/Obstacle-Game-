@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title> Accelerator Game</title>
+<style type="text/css">
+	canvas {
+		border: 2px solid black;
+		background-color: "yellow";
+	}
+</style>
+</head>
+<body onload="startGame()">
+<script type="text/javascript">
+var myGamePiece;
+var myObstacles=[];
+function startGame()
+{
+	myGameArea.start();
+	myGamePiece = new component(30, 30, "red", 10, 120);
+	//myObstacles[0]=new component(200,10,"green",300,120);
+}
+var flag=1;
+var myGameArea = {
+	canvas: document.createElement("canvas"),
+	start: function() {
+		this.canvas.width = 480;
+		this.canvas.height = 270;
+		this.context = this.canvas.getContext("2d");
+		document.body.insertBefore(this.canvas, document.body.childNodes[0]);
+	 this.interval=setInterval(updateGameArea,20);
+	 this.frameNo=0;
+	 window.addEventListener('keydown', function (event) {
+			             myGameArea.key = event.keyCode;
+				     if(myGameArea.key==32&&flag)
+				     {  flag=0;
+				     pauseGame();
+				     }
+				     else if(myGameArea.key==32&&flag==0){
+				     flag=1;
+				     playGame();
+				     }
+				             })
+	         window.addEventListener('keyup', function (e) {
+				             myGameArea.key = false;
+					             })
+	},
+	clear: function() {
+		this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
+	},
+stop : function() {
+	       clearInterval(this.interval);
+	       window.alert("GAMEOVER");
+       }
+}
+
+function everyinterval(n) 
+{
+	if(myGameArea.frameNo % n ==0) return true;
+	return false;
+}
+			
+function component( height, width, color, x, y) {
+	this.height = height;
+	this.width = width;
+	this.speedX=0;
+	this.speedY=0;
+	this.x = x;
+	this.y = y;
+	this.newPos= function() {
+		this.x+=this.speedX;
+		this.y+=this.speedY;
+	}
+	this.update = function() {
+		ctx = myGameArea.context;
+		ctx.fillStyle = color;
+		ctx.fillRect(this.x, this.y, this.width, this.height);}
+	this.crashWith = function(otherobj) {
+		var myleft = this.x;
+		var myright = this.x + (this.width);
+		var mytop = this.y;
+		var mybottom = this.y + (this.height);
+		var otherleft = otherobj.x;
+		var otherright = otherobj.x + (otherobj.width);
+		var othertop = otherobj.y;
+		var otherbottom = otherobj.y + (otherobj.height);
+		var crash = true;
+		if ((mybottom < othertop) ||(mytop > otherbottom) || (myright < otherleft) || (myleft > otherright)) {
+			crash = false;
+		}
+		return crash;
+	}
+}
+var myScore={
+update : function()
+	{
+		var ctx=myGameArea.context;
+		ctx.font="30px Arial";
+		ctx.fillStyle="black";
+		ctx.fillText(this.text,280,40);
+	}
+}
+function stopMove() {
+	myGamePiece.speedX=0;
+	myGamePiece.speedY=0;
+}
+
+function pauseGame() {
+	myGamePiece.speedY=0;
+	myGamePiece.speedX=0;
+	clearInterval(myGameArea.interval);
+	for(i=0;i<myObstacles.length;i++)
+	{	myObstacles[i].speedX=0;
+		myObstacles[i].update();
+	}
+
+}
+function moveUp() {
+	myGamePiece.speedY-=1;
+	myGamePiece.newPos();
+	myGamePiece.update();
+}
+
+function movedown() {
+	myGamePiece.speedY+=1;
+	myGamePiece.newPos();
+	myGamePiece.update();
+}
+function moveleft() {
+	myGamePiece.speedX=-1;
+	myGamePiece.newPos();
+	myGamePiece.update();
+}
+function moveright() {
+	myGamePiece.speedX+=1;
+	myGamePiece.newPos();
+	myGamePiece.update();
+}
+function playGame(){
+	myGameArea.interval=setInterval(updateGameArea,20);
+}
+function updateGameArea() {
+	
+	for (i=0;i<myObstacles.length;i+=1)
+	{
+		if(myGamePiece.crashWith(myObstacles[i]))
+		{
+			myGameArea.stop();
+			return ;
+		}
+	}
+	myGameArea.clear();
+	if(everyinterval(150) )
+	{
+		var x= myGameArea.canvas.width;
+		var y=myGameArea.canvas.height;
+		var height1=Math.floor(Math.random()*(180)+20);
+		var gap=Math.floor(Math.random()*(50)+50);
+		var height2=y-height1-gap;
+		myObstacles.push(new component(height1,10,"green",x,0));
+		myObstacles.push(new component(height2,10,"green",x,height1+gap));
+	}
+	for(i=0;i<myObstacles.length;i+=1)
+	{	myObstacles[i].x-=1;
+		myObstacles[i].update();
+	}
+	myGameArea.frameNo+=1;
+	myScore.text=myGameArea.frameNo;
+	myScore.update();
+	myGamePiece.speedX = 0;
+	myGamePiece.speedY = 0;
+	if (myGameArea.key && myGameArea.key == 37) {myGamePiece.speedX -=4; }
+	if (myGameArea.key && myGameArea.key == 39) {myGamePiece.speedX +=4; }
+	if (myGameArea.key && myGameArea.key == 38) {myGamePiece.speedY -=4; }
+	if (myGameArea.key && myGameArea.key == 40) {myGamePiece.speedY += 4; }
+	myGamePiece.newPos();
+	myGamePiece.update();
+}
+
+</script>
+<br>
+<button ontouchstart="moveUp()" onclick="moveUp()">UP</button> <br>
+<button ontouchstart="moveleft()" onmousedown="moveleft()" onmouseup="stopMove()">LEFT</button>
+<button ontouchstart="moveright()" onmousedown="moveright()" onmouseup="stopMove()">RIGHT</button> <br>
+<button ontouchstart="movedown()" onmousedown="movedown()" onmouseup="stopMove()">DOWN</button><br>
+<button onclick="startGame()">RESTART</button>
+<button onclick="pauseGame()">Pause</button>
+<button onclick="playGame()">Play</button>
+
+</body>
+</html>
